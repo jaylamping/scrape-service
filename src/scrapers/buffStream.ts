@@ -12,6 +12,7 @@ let visitedLinks = new Set();
 
 const buffStreamScraper = async () => {
   const dictionary = await buildDictionary();
+
   let pageCounter = 0;
   const crawlPage = async (browser: Browser, url: string) => {
     const dictionaryMatch = dictionary.some(word => url.includes(word));
