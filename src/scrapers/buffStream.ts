@@ -3,7 +3,6 @@ import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 import buildDictionary from '../util/buildDictionary';
-import getUpcomingMatchups from '../api/getUpcomingMatchups';
 import getMatchupIdFromLink from '../util/getMatchupIdFromLink';
 
 const URL = 'https://buffstreams.app/';
@@ -39,7 +38,8 @@ const initializeBrowser = async () => {
   return puppeteer.launch({
     headless: 'new',
     executablePath: EXECUTABLE_PATH,
-    timeout: 0
+    timeout: 0,
+    defaultViewport: { width: 1200, height: 900 }
   });
 };
 
@@ -48,7 +48,6 @@ const initializeBrowser = async () => {
  * @param browser puppeteer browser instance
  * @param url url to crawl
  * @param dictionary dictionary of words to match against
- * @returns matchup links
  */
 const crawlPage = async (browser: Browser, url: string, dictionary: Array<any>, pageCounter: number) => {
   // dip out this bitch if link doesn't match dictionary
@@ -73,7 +72,7 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<any>, 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(0);
 
-  await page.goto(url, { waitUntil: 'load', timeout: 0 });
+  await page.goto(url, { timeout: 0 });
 
   const links = await page.$$eval(
     'a',
@@ -88,8 +87,6 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<any>, 
   for (const link of links) {
     await crawlPage(browser, link, dictionary, pageCounter);
   }
-
-  return matchupLinks;
 };
 
 /**
@@ -103,60 +100,58 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
     const page: Page = await browser.newPage();
     page.setDefaultNavigationTimeout(0);
 
-    const timeout: NodeJS.Timeout = setTimeout(() => {
-      reject(new Error('No .m3u8 URL found within the time limit.'));
-    }, 3000);
+    const timeout: NodeJS.Timeout = setTimeout(async () => {
+      reject(`No .m3u8 URL found within the time limit for link ${url}`);
+    }, 2000);
 
     page.on('request', async request => {
       if (request.url().endsWith('.m3u8')) {
         clearTimeout(timeout);
+        await page.close();
         resolve(request.url());
       }
     });
 
-    await page.goto(url, { waitUntil: 'load', timeout: 0 });
-    await page.waitForSelector('#video-player');
-
-    try {
-      await page.click('#video-player');
-    } catch (err) {
-      reject(`Unable to click video for link ${url}`);
-    }
-    await page.waitForFunction(
-      selector => {
-        const element: HTMLVideoElement | null = document.querySelector(selector);
-        return element && element.src && element.src.length > 0;
-      },
-      {},
-      'video'
-    );
-
-    await page.close();
+    await page.goto(url, { timeout: 0 });
+    await page.waitForSelector('#video-player', { timeout: 0 }).then(async () => {
+      try {
+        await page.click('#video-player');
+      } catch (err) {
+        await page.close();
+        reject(`Unable to click video for link ${url}`);
+      }
+    });
   });
 };
 
 const buffStreamScraper = async () => {
-  const browser: Browser = await initializeBrowser();
+  const crawlBrowser: Browser = await initializeBrowser();
+  const matchupBrowser: Browser = await initializeBrowser();
   const dictionary: Array<object> = await buildDictionary();
   let pageCounter = 0;
 
-  const links: Set<string> = (await crawlPage(browser, URL, dictionary, pageCounter)) ?? new Set();
+  await crawlPage(crawlBrowser, URL, dictionary, pageCounter);
+  crawlBrowser.close();
 
-  for (const link of links) {
+  console.log('Crawling complete. Moving to matchup pages...');
+
+  for (const link of matchupLinks) {
+    console.log(link);
+    let streamUrl: string = '';
+
     try {
-      console.log(link);
-      const streamUrl = await scrapeMatchupPage(browser, link);
-      const matchupId = await getMatchupIdFromLink(link);
-
-      if (streamUrl && matchupId) {
-        console.log('YAYYYYYYY');
-      }
-
-      console.log(`Found stream for ${link}: ${streamUrl}`);
-      console.log(`Matchup ID: ${matchupId}`);
+      streamUrl = await scrapeMatchupPage(matchupBrowser, link);
     } catch (err) {
       console.log(err);
     }
+    const matchupId = await getMatchupIdFromLink(link);
+
+    if (streamUrl && matchupId) {
+      console.log('YAYYYYYYY');
+    }
+
+    console.log(`Found stream for ${link}: ${streamUrl}`);
+    console.log(`Matchup ID: ${matchupId}`);
   }
 
   //await browser.close();
