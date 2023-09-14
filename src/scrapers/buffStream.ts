@@ -38,8 +38,7 @@ const initializeBrowser = async () => {
   return puppeteer.launch({
     headless: 'new',
     executablePath: EXECUTABLE_PATH,
-    timeout: 0,
-    defaultViewport: { width: 1200, height: 900 }
+    timeout: 0
   });
 };
 
