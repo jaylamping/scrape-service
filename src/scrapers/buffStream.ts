@@ -4,8 +4,6 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 import buildDictionary from '../util/buildDictionary';
 
-puppeteer.use(StealthPlugin());
-
 const URL = 'https://buffstreams.app/';
 const EXECUTABLE_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -29,6 +27,7 @@ const clickyLink = (url: string, dictionary: Array<string>) => {
 };
 
 const initializeBrowser = async () => {
+  puppeteer.use(StealthPlugin());
   return puppeteer.launch({
     headless: 'new',
     executablePath: EXECUTABLE_PATH
@@ -55,7 +54,9 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<string
   }
 
   const page = await browser.newPage();
-  await page.goto(url);
+  page.setDefaultNavigationTimeout(0);
+
+  await page.goto(url, { waitUntil: 'load', timeout: 0 });
 
   const links = await page.$$eval(
     'a',
@@ -83,6 +84,7 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<string
 const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string> => {
   return new Promise<string>(async (resolve, reject) => {
     const page: Page = await browser.newPage();
+    page.setDefaultNavigationTimeout(0);
 
     const timeout: NodeJS.Timeout = setTimeout(() => {
       reject(new Error('No .m3u8 URL found within the time limit.'));
@@ -95,11 +97,14 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
       }
     });
 
-    await page.goto(url);
+    await page.goto(url, { waitUntil: 'load', timeout: 0 });
     await page.waitForSelector('#video-player');
 
-    await page.click('#video-player');
-
+    try {
+      await page.click('#video-player');
+    } catch (err) {
+      reject(`Unable to click video for link ${url}`);
+    }
     await page.waitForFunction(
       selector => {
         const element: HTMLVideoElement | null = document.querySelector(selector);
@@ -121,11 +126,15 @@ const buffStreamScraper = async () => {
   const links: Set<string> = (await crawlPage(browser, URL, dictionary, pageCounter)) ?? new Set();
 
   for (const link of links) {
-    const streamUrl = await scrapeMatchupPage(browser, link);
-    console.log(streamUrl);
+    try {
+      const streamUrl = await scrapeMatchupPage(browser, link);
+      console.log(`Found stream for ${link}: ${streamUrl}`);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
-  // await browser.close();
+  //await browser.close();
 };
 
 export default buffStreamScraper;
