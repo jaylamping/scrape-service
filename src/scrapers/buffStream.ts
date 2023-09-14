@@ -21,8 +21,13 @@ const DEFAULTS = new Set([
 let visitedLinks: Set<string> = new Set();
 let matchupLinks: Set<string> = new Set();
 
-const clickyLink = (url: string, dictionary: Array<string>) => {
-  const match = dictionary.some(word => url.includes(word)) || [...DEFAULTS].some(word => url.includes(word));
+const clickyLink = (url: string, dictionary: Array<any>) => {
+  const match =
+    dictionary
+      .map(obj => obj.name)
+      .some(arrayString =>
+        arrayString.split(' ').some((word: string) => url.toLowerCase().includes(word.toLowerCase()))
+      ) || [...DEFAULTS].some(word => url.includes(word));
   return !visitedLinks.has(url) && !url.includes('blog') && url.charAt(url.length - 1) !== '#' && match;
 };
 
@@ -41,7 +46,7 @@ const initializeBrowser = async () => {
  * @param dictionary dictionary of words to match against
  * @returns matchup links
  */
-const crawlPage = async (browser: Browser, url: string, dictionary: Array<string>, pageCounter: number) => {
+const crawlPage = async (browser: Browser, url: string, dictionary: Array<any>, pageCounter: number) => {
   // dip out this bitch if link doesn't match dictionary
   if (pageCounter > 0 && !clickyLink(url, dictionary)) return;
 
@@ -49,7 +54,15 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<string
 
   console.log(`Navigating to ${url}`);
   visitedLinks.add(url);
-  if (dictionary.some(word => url.includes(word))) {
+
+  // add url to matchupLinks if dictionary matchup
+  if (
+    dictionary
+      .map(obj => obj.name)
+      .some(arrayString =>
+        arrayString.split(' ').some((word: string) => url.toLowerCase().includes(word.toLowerCase()))
+      )
+  ) {
     matchupLinks.add(url);
   }
 

@@ -9,20 +9,16 @@ const buildDictionary = async () => {
 
   const nflTeamArray: Array<string> = Array.from(
     new Set(
-      nflTeams.map((team: string) => {
-        team = team.toLowerCase();
-        const words = team.split(' ');
-        return words[words.length - 1];
+      nflTeams.map((team: object) => {
+        return team;
       })
     )
   );
 
   const mlbTeamArray: Array<string> = Array.from(
     new Set(
-      mlbTeams.map((team: string) => {
-        team = team.toLowerCase();
-        const words = team.split(' ');
-        return words[words.length - 1];
+      mlbTeams.map((team: object) => {
+        return team;
       })
     )
   );

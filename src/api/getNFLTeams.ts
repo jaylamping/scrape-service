@@ -12,7 +12,7 @@ const getNFLTeams = async () => {
                 }
             `
     });
-    return teams.data.data.teamsByLeague.map((team: any) => team.name);
+    return teams.data.data.teamsByLeague;
   } catch (err) {
     console.log(err);
   }

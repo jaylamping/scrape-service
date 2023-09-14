@@ -7,11 +7,12 @@ const getMLBTeams = async () => {
                 query {
                     teamsByLeague(league: "MLB") {
                         name
+                        id
                     }
                 }
             `
     });
-    return teams.data.data.teamsByLeague.map((team: any) => team.name);
+    return teams.data.data.teamsByLeague;
   } catch (err) {
     console.log(err);
   }
