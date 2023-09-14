@@ -114,8 +114,8 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
 };
 
 const buffStreamScraper = async () => {
-  const browser = await initializeBrowser();
-  const dictionary = await buildDictionary();
+  const browser: Browser = await initializeBrowser();
+  const dictionary: Array<string> = await buildDictionary();
   let pageCounter = 0;
 
   const links: Set<string> = (await crawlPage(browser, URL, dictionary, pageCounter)) ?? new Set();
