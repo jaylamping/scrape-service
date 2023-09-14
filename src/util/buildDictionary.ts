@@ -3,16 +3,6 @@ import getMLBTeams from '../api/getMLBTeams';
 
 const buildDictionary = async () => {
   let dictionary: string[] = [];
-  const defaults = [
-    'nflstreams',
-    'ufcstreams',
-    'boxingstreams',
-    'formula1streams',
-    'nbastreams',
-    'nhlstreams',
-    'mlbstreams',
-    'ncaastreams'
-  ];
 
   const nflTeams = await getNFLTeams();
   const mlbTeams = await getMLBTeams();
@@ -37,7 +27,7 @@ const buildDictionary = async () => {
     )
   );
 
-  dictionary = [...dictionary, ...defaults, ...nflTeamArray, ...mlbTeamArray];
+  dictionary = [...dictionary, ...nflTeamArray, ...mlbTeamArray];
 
   return dictionary;
 };
