@@ -3,6 +3,8 @@ import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 import buildDictionary from '../util/buildDictionary';
+import getUpcomingMatchups from '../api/getUpcomingMatchups';
+import getMatchupIdFromLink from '../util/getMatchupIdFromLink';
 
 const URL = 'https://buffstreams.app/';
 const EXECUTABLE_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -33,9 +35,11 @@ const clickyLink = (url: string, dictionary: Array<any>) => {
 
 const initializeBrowser = async () => {
   puppeteer.use(StealthPlugin());
+
   return puppeteer.launch({
     headless: 'new',
-    executablePath: EXECUTABLE_PATH
+    executablePath: EXECUTABLE_PATH,
+    timeout: 0
   });
 };
 
@@ -133,15 +137,23 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
 
 const buffStreamScraper = async () => {
   const browser: Browser = await initializeBrowser();
-  const dictionary: Array<string> = await buildDictionary();
+  const dictionary: Array<object> = await buildDictionary();
   let pageCounter = 0;
 
   const links: Set<string> = (await crawlPage(browser, URL, dictionary, pageCounter)) ?? new Set();
 
   for (const link of links) {
     try {
+      console.log(link);
       const streamUrl = await scrapeMatchupPage(browser, link);
+      const matchupId = await getMatchupIdFromLink(link);
+
+      if (streamUrl && matchupId) {
+        console.log('YAYYYYYYY');
+      }
+
       console.log(`Found stream for ${link}: ${streamUrl}`);
+      console.log(`Matchup ID: ${matchupId}`);
     } catch (err) {
       console.log(err);
     }

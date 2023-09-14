@@ -2,12 +2,12 @@ import getNFLTeams from '../api/getNFLTeams';
 import getMLBTeams from '../api/getMLBTeams';
 
 const buildDictionary = async () => {
-  let dictionary: string[] = [];
+  let dictionary: object[] = [];
 
   const nflTeams = await getNFLTeams();
   const mlbTeams = await getMLBTeams();
 
-  const nflTeamArray: Array<string> = Array.from(
+  const nflTeamArray: Array<object> = Array.from(
     new Set(
       nflTeams.map((team: object) => {
         return team;
@@ -15,7 +15,7 @@ const buildDictionary = async () => {
     )
   );
 
-  const mlbTeamArray: Array<string> = Array.from(
+  const mlbTeamArray: Array<object> = Array.from(
     new Set(
       mlbTeams.map((team: object) => {
         return team;
