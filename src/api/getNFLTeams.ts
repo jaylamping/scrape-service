@@ -7,6 +7,7 @@ const getNFLTeams = async () => {
                 query {
                     teamsByLeague(league: "NFL") {
                         name
+                        id
                     }
                 }
             `

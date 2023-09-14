@@ -1,4 +1,4 @@
-import { Browser } from 'puppeteer';
+import { Browser, Page } from 'puppeteer';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
@@ -40,7 +40,7 @@ const initializeBrowser = async () => {
  * @param browser puppeteer browser instance
  * @param url url to crawl
  * @param dictionary dictionary of words to match against
- * @returns void
+ * @returns matchup links
  */
 const crawlPage = async (browser: Browser, url: string, dictionary: Array<string>, pageCounter: number) => {
   // dip out this bitch if link doesn't match dictionary
@@ -80,30 +80,37 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<string
  * @param url url of the matchup page
  * @returns video source url
  */
-const scrapeMatchupPage = async (browser: Browser, url: string) => {
-  const page = await browser.newPage();
+const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string> => {
+  return new Promise<string>(async (resolve, reject) => {
+    const page: Page = await browser.newPage();
 
-  page.on('request', request => {
-    if (request.url().endsWith('.m3u8')) {
-      console.log(`Found .m3u8 URL: ${request.url()}`);
-    }
+    const timeout: NodeJS.Timeout = setTimeout(() => {
+      reject(new Error('No .m3u8 URL found within the time limit.'));
+    }, 3000);
+
+    page.on('request', async request => {
+      if (request.url().endsWith('.m3u8')) {
+        clearTimeout(timeout);
+        resolve(request.url());
+      }
+    });
+
+    await page.goto(url);
+    await page.waitForSelector('#video-player');
+
+    await page.click('#video-player');
+
+    await page.waitForFunction(
+      selector => {
+        const element: HTMLVideoElement | null = document.querySelector(selector);
+        return element && element.src && element.src.length > 0;
+      },
+      {},
+      'video'
+    );
+
+    await page.close();
   });
-
-  await page.goto(url);
-  await page.waitForSelector('#video-player');
-
-  await page.click('#video-player');
-
-  await page.waitForFunction(
-    selector => {
-      const element: HTMLVideoElement | null = document.querySelector(selector);
-      return element && element.src && element.src.length > 0;
-    },
-    {},
-    'video'
-  );
-
-  await page.close();
 };
 
 const buffStreamScraper = async () => {
@@ -114,10 +121,11 @@ const buffStreamScraper = async () => {
   const links: Set<string> = (await crawlPage(browser, URL, dictionary, pageCounter)) ?? new Set();
 
   for (const link of links) {
-    await scrapeMatchupPage(browser, link);
+    const streamUrl = await scrapeMatchupPage(browser, link);
+    console.log(streamUrl);
   }
 
-  //await browser.close();
+  // await browser.close();
 };
 
 export default buffStreamScraper;
