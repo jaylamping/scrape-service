@@ -112,14 +112,20 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
     });
 
     await page.goto(url, { timeout: 0 });
-    await page.waitForSelector('#video-player', { timeout: 0 }).then(async () => {
-      try {
-        await page.click('#video-player');
-      } catch (err) {
+    await page
+      .waitForSelector('#video-player', { timeout: 5000 })
+      .then(async () => {
+        try {
+          await page.click('#video-player');
+        } catch (err) {
+          await page.close();
+          reject(`Unable to click video for link ${url}`);
+        }
+      })
+      .catch(async () => {
         await page.close();
-        reject(`Unable to click video for link ${url}`);
-      }
-    });
+        reject(`Unable to find video for link ${url}`);
+      });
   });
 };
 
@@ -153,7 +159,7 @@ const buffStreamScraper = async () => {
     console.log(`Matchup ID: ${matchupId}`);
   }
 
-  //await browser.close();
+  await matchupBrowser.close();
 };
 
 export default buffStreamScraper;
