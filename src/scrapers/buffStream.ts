@@ -23,7 +23,7 @@ const DEFAULTS = new Set([
 let visitedLinks: Set<string> = new Set();
 let matchupLinks: Set<string> = new Set();
 
-const shouldVisitLink = (url: string, dictionary: Array<string>) => {
+const clickyLink = (url: string, dictionary: Array<string>) => {
   const match = dictionary.some(word => url.includes(word)) || [...DEFAULTS].some(word => url.includes(word));
   return !visitedLinks.has(url) && !url.includes('blog') && url.charAt(url.length - 1) !== '#' && match;
 };
@@ -44,7 +44,7 @@ const initializeBrowser = async () => {
  */
 const crawlPage = async (browser: Browser, url: string, dictionary: Array<string>, pageCounter: number) => {
   // dip out this bitch if link doesn't match dictionary
-  if (pageCounter > 0 && !shouldVisitLink(url, dictionary)) return;
+  if (pageCounter > 0 && !clickyLink(url, dictionary)) return;
 
   pageCounter++;
 
@@ -59,10 +59,10 @@ const crawlPage = async (browser: Browser, url: string, dictionary: Array<string
 
   const links = await page.$$eval(
     'a',
-    (links, url) => {
-      return links.map(link => link.href).filter(href => href.includes(url));
+    (links, URL) => {
+      return links.map(link => link.href).filter(href => href.includes(URL));
     },
-    url
+    URL
   );
 
   await page.close();
