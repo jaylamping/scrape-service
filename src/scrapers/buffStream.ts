@@ -113,7 +113,7 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
 
     await page.goto(url, { timeout: 0 });
     await page
-      .waitForSelector('#video-player', { timeout: 5000 })
+      .waitForSelector('#video-player', { timeout: 2000 })
       .then(async () => {
         try {
           await page.click('#video-player');
