@@ -101,7 +101,7 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
     page.setDefaultNavigationTimeout(0);
 
     const timeout: NodeJS.Timeout = setTimeout(async () => {
-      reject(`No .m3u8 URL found within the time limit for link ${url}`);
+      reject(`No URL found for ${url}`);
     }, 2000);
 
     page.on('request', async request => {
@@ -120,7 +120,7 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
           await page.click('#video-player');
         } catch (err) {
           await page.close();
-          reject(`Unable to click video for link ${url}`);
+          reject(`Unable to click video for ${url}`);
         }
       })
       .catch(async () => {
@@ -153,11 +153,8 @@ const buffStreamScraper = async () => {
 
     if (streamUrl && matchupId) {
       const matchup = await addURLToMatchup(matchupId, streamUrl);
-      console.log(`URL added for matchup ${matchup.name}`);
+      console.log(`URL added for matchup - ${matchup.name}`);
     }
-
-    console.log(`Found stream for ${link}: ${streamUrl}`);
-    console.log(`Matchup ID: ${matchupId}`);
   }
 
   await matchupBrowser.close();
