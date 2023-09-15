@@ -4,6 +4,7 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 import buildDictionary from '../util/buildDictionary';
 import getMatchupIdFromLink from '../util/getMatchupIdFromLink';
+import addURLToMatchup from '../api/addURLToMatchup';
 
 const URL = 'https://buffstreams.app/';
 const EXECUTABLE_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -141,7 +142,6 @@ const buffStreamScraper = async () => {
   console.log('Crawling complete. Moving to matchup pages...');
 
   for (const link of matchupLinks) {
-    console.log(link);
     let streamUrl: string = '';
 
     try {
@@ -152,7 +152,8 @@ const buffStreamScraper = async () => {
     const matchupId = await getMatchupIdFromLink(link);
 
     if (streamUrl && matchupId) {
-      console.log('YAYYYYYYY');
+      const matchup = await addURLToMatchup(matchupId, streamUrl);
+      console.log(`URL added for matchup ${matchup.name}`);
     }
 
     console.log(`Found stream for ${link}: ${streamUrl}`);
