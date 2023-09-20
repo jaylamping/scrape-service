@@ -106,6 +106,12 @@ const scrapeMatchupPage = async (browser: Browser, url: string): Promise<string>
 
     page.on('request', async request => {
       if (request.url().endsWith('.m3u8')) {
+        // need to capture the entire request object here and save as one entity
+        // so i can spoof the header info down the road
+        // for example
+        // const b64request = btoa(JSON.stringify(request));
+        // the resulting string should be what i save to DB and extract later
+
         clearTimeout(timeout);
         await page.close();
         resolve(request.url());
